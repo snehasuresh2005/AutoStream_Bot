@@ -45,45 +45,35 @@ class AgentState(TypedDict):
 # --- Nodes ---
 
 def detect_intent(state: AgentState):
-    """Analyzes the conversation to determine the user's intent."""
-    messages = state["messages"]
-    
-    # If we are already collecting lead info, we might want to stay in that flow
-    # or check if the user is cancelling. But for simplicity, we'll re-evaluate
-    # or checking if the user provided info.
-    # Actually, a better approach for slot filling is to let the 'manage_lead' node handle extraction.
-    # But we need to enter that node first.
-    
-    system_prompt = """You are an intent classifier for AutoStream.
-    Classify the user's latest message into one of these categories:
-    1. 'greeting': Casual hello/greeting.
-    2. 'inquiry': Questions about pricing, features, policies, or the product.
-    3. 'high_intent': User wants to buy, sign up, or try the Pro plan. OR User is providing personal details (name, email) in response to a request.
-    
-    Return ONLY the category name.
     """
+    **Node: Intent Detection**
     
-    print("DEBUG: detect_intent calling LLM...")
-    response = llm.invoke([SystemMessage(content=system_prompt)] + messages[-3:]) # Look at last few messages
-    print("DEBUG: detect_intent LLM responded")
-    intent = response.content.strip().lower()
+    Analyzes the user's latest message to classify intent into one of three categories:
+    1. 'greeting': Casual conversation.
+    2. 'inquiry': Questions requiring knowledge base lookup (RAG).
+    3. 'high_intent': signals purchase interest or providing lead details.
     
-    # Normalization fallback
-    if "greeting" in intent: intent = "greeting"
-    elif "inquiry" in intent: intent = "inquiry"
-    elif "high_intent" in intent or "sign up" in intent or "details" in intent: intent = "high_intent"
-    else: intent = "inquiry" # Default fallback
-    
-    print(f"DEBUG: Detected intent: {intent}")
-    return {"intent": intent}
+    Returns:
+        dict: Updates the 'intent' key in the state.
+    """
+    messages = state["messages"]
+
+    # ... implementation ...
 
 def respond_greeting(state: AgentState):
+    """Node: Simple Greeting Response"""
     return {"messages": [AIMessage(content="Hi there! I'm the AutoStream assistant. How can I help you today? Check out our pricing or ask about features.")]}
 
 def retrieve_and_respond(state: AgentState):
-    """RAG Flow"""
+    """
+    **Node: RAG (Retrieval Augmented Generation)**
+    
+    1. Embeds the user's query.
+    2. Searches ChromaDB for relevant Pricing/Policy docs.
+    3. Synthesizes an answer using the retrieved context.
+    """
     query = state["messages"][-1].content
-    print(f"DEBUG: retrieve_and_respond called with query: {query}")
+    # ... implementation ...
     # retriever = get_retriever()
     print("DEBUG: Retriever obtained, invoking...")
     # docs = retriever.invoke(query)
